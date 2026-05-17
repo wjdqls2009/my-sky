@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1VWxn_RyHNW_dhfzuD72xtovFzJJQMnfU
 """
 
-!pip install streamlit pandas ephem
-
 !pip install streamlit pandas
 
 # Commented out IPython magic to ensure Python compatibility.
