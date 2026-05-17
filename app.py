@@ -67,21 +67,18 @@ def get_moon_phase_korean(observer):
 
 @st.cache_data(ttl=600)
 def fetch_satellite_tle():
-    urls = [
-        "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle",
-        "https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle"
-    ]
+    # 데이터를 가장 가볍고 빠른 핵심 위성/우주정거장 그룹 1개만 조회하도록 변경
+    url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle"
     sats = []
-    for url in urls:
-        try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req) as res:
-                lines = res.read().decode('utf-8').splitlines()
-                for i in range(0, len(lines)-2, 3):
-                    name = lines[i].strip()
-                    if "STARLINK" not in name.upper():
-                        sats.append((name, lines[i+1].strip(), lines[i+2].strip()))
-        except: continue
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as res:
+            lines = res.read().decode('utf-8').splitlines()
+            for i in range(0, len(lines)-2, 3):
+                name = lines[i].strip()
+                sats.append((name, lines[i+1].strip(), lines[i+2].strip()))
+    except: 
+        pass
     return sats
 
 def main():
