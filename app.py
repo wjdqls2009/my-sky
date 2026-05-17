@@ -67,7 +67,7 @@ def get_moon_phase_korean(observer):
 
 @st.cache_data(ttl=600)
 def fetch_satellite_tle():
-    # 데이터를 가장 가볍고 빠른 핵심 위성/우주정거장 그룹 1개만 조회하도록 변경
+    # 해외 서버 부하를 줄이기 위해 가장 가볍고 핵심적인 우주정거장 그룹 1개만 빠르게 조회
     url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle"
     sats = []
     try:
