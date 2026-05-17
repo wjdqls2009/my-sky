@@ -65,20 +65,20 @@ def get_moon_phase_korean(observer):
         if curr_p > 0.4: return "하현달"
         return "그믐달"
 
-@st.cache_data(ttl=600)
 def fetch_satellite_tle():
-    # 해외 서버 부하를 줄이기 위해 가장 가볍고 핵심적인 우주정거장 그룹 1개만 빠르게 조회
-    url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle"
+    # 스트림릿 서버 부하를 최소화하면서도 항상 위성이 걸리도록 '육안 관측 가능 핵심 위성(visual)' 그룹 사용
+    url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle"
     sats = []
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as res:
+        # 스트림릿 서버가 다소 느려도 끝까지 받아오도록 타임아웃을 8초로 설정
+        with urllib.request.urlopen(req, timeout=8) as res:
             lines = res.read().decode('utf-8').splitlines()
             for i in range(0, len(lines)-2, 3):
                 name = lines[i].strip()
                 sats.append((name, lines[i+1].strip(), lines[i+2].strip()))
     except: 
-        pass
+        return None
     return sats
 
 def main():
@@ -142,20 +142,24 @@ def main():
 
     st.subheader("🛰️ 평택 상공 통과 중인 인공위성 및 우주정거장")
     sat_list = fetch_satellite_tle()
-    v_sats = 0
-    for name, l1, l2 in sat_list:
-        try:
-            sat = ephem.readtle(name, l1, l2)
-            sat.compute(obs)
-            alt = float(sat.alt) * 57.2958
-            if alt > 0:
-                kind = "🛸 우주정거장" if "ISS" in name or "TIANGONG" in name.upper() else "🛰️ 인공위성"
-                st.write(f"- {kind} **{name}** | {get_bearing(sat.az)} | 고도: {alt:.1f}° | 거리: {sat.range/1000:.0f} km")
-                v_sats += 1
-        except: continue
     
-    if v_sats == 0:
-        st.info("현재 머리 위를 지나가는 주요 인공위성이 없습니다.")
+    if sat_list is None:
+        st.warning("🔄 외부 천문 데이터 서버 연결이 다소 지연되고 있습니다. 잠시 후 새로고침(F5) 해주세요.")
+    else:
+        v_sats = 0
+        for name, l1, l2 in sat_list:
+            try:
+                sat = ephem.readtle(name, l1, l2)
+                sat.compute(obs)
+                alt = float(sat.alt) * 57.2958
+                if alt > 0:
+                    kind = "🛸 우주정거장" if "ISS" in name or "TIANGONG" in name.upper() else "🛰️ 인공위성"
+                    st.write(f"- {kind} **{name}** | {get_bearing(sat.az)} | 고도: {alt:.1f}° | 거리: {sat.range/1000:.0f} km")
+                    v_sats += 1
+            except: continue
+        
+        if v_sats == 0:
+            st.info("현재 머리 위를 지나가는 주요 육안 관측 위성이 없습니다.")
 
 if __name__ == "__main__":
     main()
